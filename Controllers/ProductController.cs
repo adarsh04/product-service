@@ -16,35 +16,50 @@ public class ProductController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+    public async Task<ActionResult<IEnumerable<ProductResponseDto>>> GetProducts()
     {
-        return await _context.Products.ToListAsync();
+        var products = await _context.Products.ToListAsync();
+
+        var productDtos = products.Select(p => p.ToDto());
+
+        return Ok(productDtos);
     }
 
 
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<Product>> GetProduct(int id)
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<Product>> GetProduct(Guid id)
     {
         var product = await _context.Products.FindAsync(id);
 
         if (product == null) return NotFound();
 
-        return product;
+        return Ok(product.ToDto());
     }
 
 
     [HttpPost]
-    public async Task<ActionResult<Product>> CreateProduct(Product product)
+    public async Task<ActionResult<Product>> CreateProduct(CreateProductRequestDto productDto)
     {
+        var product = productDto.ToEntity(); 
+
+        // 2. Add to Postgres and Save (this populates the GUID)
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+        // 3. Map back to Response DTO for the final output
+        var response = product.ToDto();
+
+        // 4. Return 201 Created with the correct Location header
+        return CreatedAtAction(
+            nameof(GetProduct), 
+            new { id = response.Id }, // Use the newly generated ID
+            response
+        );
     }
 
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProduct(int id, Product product)
+    public async Task<IActionResult> UpdateProduct(Guid id, Product product)
     {
         if (id != product.Id) return BadRequest("ID mismatch");
 

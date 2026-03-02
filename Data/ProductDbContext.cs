@@ -14,9 +14,22 @@ public class ProductDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Product>().HasData(
-            new Product { Id = 1, Title = "Mechanical Keyboard", Summary = "RGB, Brown Switches"},
-            new Product { Id = 2, Title = "Gaming Mouse", Summary = "16000 DPI, Wireless"},
-            new Product { Id = 3, Title = "UltraWide Monitor", Summary = "34 inch, 144Hz"}
+                new Product
+                {
+                    Id = Guid.Parse("7ed3a118-ef73-4560-8438-66275b634812"),
+                    Title = "Industrial Scanner Pro",
+                    Summary = "High-speed laser scanner for physical environments.",
+                    Price = 899.99m,
+                    CreatedAt = new DateTime(2026, 3, 2, 0, 0, 0, DateTimeKind.Utc)
+                },
+                new Product
+                {
+                    Id = Guid.Parse("3f82057d-2b3a-449e-8930-466373e20601"),
+                    Title = "Rugged Tablet X1",
+                    Summary = "Drop-proof tablet for real-time inventory tracking.",
+                    Price = 1249.50m,
+                    CreatedAt = new DateTime(2026, 3, 2, 0, 0, 0, DateTimeKind.Utc)
+                }
         );
     }
 }
