@@ -32,4 +32,9 @@ public class ProductDbContext : DbContext
                 }
         );
     }
+
+    internal async Task<Product> FindAsync(Guid id)
+    {
+        throw new NotImplementedException();
+    }
 }

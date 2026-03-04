@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProductService.Data;
+using ProductService.Interfaces;
 
 namespace ProductService.Controllers;
 
@@ -8,17 +9,17 @@ namespace ProductService.Controllers;
 [Route("api/[controller]")]
 public class ProductController : ControllerBase
 {
-    private readonly ProductDbContext _context;
+    private readonly IProductRepository _repo;
 
-    public ProductController(ProductDbContext context)
+    public ProductController(IProductRepository repo)
     {
-        _context = context;
+        _repo = repo;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProductResponseDto>>> GetProducts()
     {
-        var products = await _context.Products.ToListAsync();
+        var products = await _repo.GetProductsAsync();
 
         var productDtos = products.Select(p => p.ToDto());
 
@@ -29,9 +30,12 @@ public class ProductController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<Product>> GetProduct(Guid id)
     {
-        var product = await _context.Products.FindAsync(id);
+        var product = await _repo.FindAsync(id);
 
-        if (product == null) return NotFound();
+        if (product == null)
+        {
+            return NotFound(new { Message = $"Product with ID {id} not found" });
+        }
 
         return Ok(product.ToDto());
     }
@@ -43,8 +47,8 @@ public class ProductController : ControllerBase
         var product = productDto.ToEntity(); 
 
         // 2. Add to Postgres and Save (this populates the GUID)
-        _context.Products.Add(product);
-        await _context.SaveChangesAsync();
+        _repo.AddProduct(product);
+        await _repo.SaveChangesAsync();
 
         // 3. Map back to Response DTO for the final output
         var response = product.ToDto();
@@ -58,45 +62,35 @@ public class ProductController : ControllerBase
     }
 
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProduct(Guid id, Product product)
-    {
-        if (id != product.Id) return BadRequest("ID mismatch");
-
-        _context.Entry(product).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!_context.Products.Any(e => e.Id == id)) return NotFound();
-            throw;
-        }
-
-        return NoContent();
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProduct(int id)
-    {
-        var product = await _context.Products.FindAsync(id);
-        if (product == null) return NotFound();
-
-        _context.Products.Remove(product);
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-    // public IEnumerable<Product> Get()
+    // [HttpPut("{id}")]
+    // public async Task<IActionResult> UpdateProduct(Guid id, Product product)
     // {
-    //     return Enumerable.Range(0, 4).Select(index => new Product
+    //     if (id != product.Id) return BadRequest("ID mismatch");
+
+    //     _context.Entry(product).State = EntityState.Modified;
+
+    //     try
     //     {
-    //         Id = index,
-    //         Title = Titles[index],
-    //         Summary = Summaries[index]
-    //     })
-    //     .ToArray();
+    //         await _context.SaveChangesAsync();
+    //     }
+    //     catch (DbUpdateConcurrencyException)
+    //     {
+    //         if (!_context.Products.Any(e => e.Id == id)) return NotFound();
+    //         throw;
+    //     }
+
+    //     return NoContent();
+    // }
+
+    // [HttpDelete("{id}")]
+    // public async Task<IActionResult> DeleteProduct(int id)
+    // {
+    //     var product = await _context.Products.FindAsync(id);
+    //     if (product == null) return NotFound();
+
+    //     _context.Products.Remove(product);
+    //     await _context.SaveChangesAsync();
+
+    //     return NoContent();
     // }
 }
