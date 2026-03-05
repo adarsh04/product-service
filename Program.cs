@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using ProductService.Data;
 using ProductService.Interfaces;
+using ProductService.Middleware;
+using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddValidatorsFromAssemblyContaining<CreateProductRequestValidator>();
 
 
 // 1. Get the connection string from appsettings.json
@@ -20,9 +24,13 @@ builder.Services.AddDbContext<ProductDbContext>(options =>
 
 builder.Services.AddControllers();
 
+builder.Services.AddHealthChecks().AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!);
+
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -38,5 +46,7 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health");
 
 app.Run();

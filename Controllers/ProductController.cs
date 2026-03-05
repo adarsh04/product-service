@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProductService.Data;
@@ -10,10 +11,12 @@ namespace ProductService.Controllers;
 public class ProductController : ControllerBase
 {
     private readonly IProductRepository _repo;
+    private readonly IValidator<CreateProductRequestDto> _validator;
 
-    public ProductController(IProductRepository repo)
+    public ProductController(IProductRepository repo, IValidator<CreateProductRequestDto> validator)
     {
         _repo = repo;
+        _validator = validator;
     }
 
     [HttpGet]
@@ -44,6 +47,15 @@ public class ProductController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Product>> CreateProduct(CreateProductRequestDto productDto)
     {
+
+        var validationResult = await _validator.ValidateAsync(productDto);
+
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
+        }
+
+
         var product = productDto.ToEntity(); 
 
         // 2. Add to Postgres and Save (this populates the GUID)
