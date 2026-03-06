@@ -1,4 +1,5 @@
 using FluentValidation;
+using ProductService.Models;
 
 public class CreateProductRequestValidator : AbstractValidator<CreateProductRequestDto>
 {

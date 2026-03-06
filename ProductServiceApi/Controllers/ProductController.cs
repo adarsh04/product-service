@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProductService.Data;
 using ProductService.Interfaces;
+using ProductService.Models;
+using ProductService.Mappings;
 
 namespace ProductService.Controllers;
 

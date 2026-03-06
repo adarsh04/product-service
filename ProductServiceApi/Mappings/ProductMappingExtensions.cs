@@ -1,4 +1,7 @@
 using ProductService;
+using ProductService.Models;
+
+namespace ProductService.Mappings;
 
 public static class ProductMappingExtensions
 {
@@ -16,12 +19,11 @@ public static class ProductMappingExtensions
     public static Product ToEntity(this CreateProductRequestDto dto)
     {
         return new Product
-        {
-            Id = Guid.NewGuid(), // System generates the UUID
-            Title = dto.Title,
-            Summary = dto.Summary,
-            Price = dto.Price,
-            CreatedAt = DateTime.UtcNow // System sets the timestamp
-        };
+        (
+            Guid.NewGuid(), // System generates the UUID
+            dto.Title,
+            dto.Summary,
+            dto.Price
+        );
     }
 }

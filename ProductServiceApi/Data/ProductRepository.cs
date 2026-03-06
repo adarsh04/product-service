@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using ProductService.Interfaces;
 
+using ProductService.Interfaces;
 namespace ProductService.Data;
+using ProductService.Models;
 
 public class ProductRepository: IProductRepository
 {
