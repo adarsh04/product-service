@@ -10,7 +10,7 @@ public class Product(Guid id, string title, string summary, decimal price)
 
     public decimal Price { get; set; } = price;
 
-    public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? CreatedAt { get; set; }
 
     private Product(): this(Guid.Empty, string.Empty, string.Empty, 0) { }
 }

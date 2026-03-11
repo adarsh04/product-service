@@ -5,6 +5,8 @@ using FluentValidation;
 using ProductService.Controllers;
 using ProductService.Interfaces;
 using ProductService.Models;
+using ProductService.Services;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace ProductService.Tests;
 
@@ -15,7 +17,10 @@ public class ProductControllerTests
 
     private readonly Mock<IValidator<CreateProductRequestDto>> _validator;
 
+
     private readonly ProductController _controller;
+
+    private readonly Mock<ICacheService> _cache;
 
 
     
@@ -24,7 +29,8 @@ public class ProductControllerTests
         _mockRepo = new Mock<IProductRepository>();
         _validator = new Mock<IValidator<CreateProductRequestDto>>();
 
-        _controller = new ProductController(_mockRepo.Object, _validator.Object);
+        _cache = new Mock<ICacheService>();
+        _controller = new ProductController(_mockRepo.Object, _validator.Object, _cache.Object);
     }
 
     [Fact]

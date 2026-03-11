@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ProductService.Data;
 using ProductService.Interfaces;
 using ProductService.Middleware;
+using ProductService.Services;
 using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +28,14 @@ builder.Services.AddControllers();
 builder.Services.AddHealthChecks().AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!);
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+    options.InstanceName = "ProductService_"; // Prefix for keys in Redis
+});
+
+builder.Services.AddScoped<ICacheService, CacheService>();
 
 var app = builder.Build();
 

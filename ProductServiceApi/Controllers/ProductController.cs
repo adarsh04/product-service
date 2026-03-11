@@ -1,10 +1,13 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 using ProductService.Data;
 using ProductService.Interfaces;
 using ProductService.Models;
 using ProductService.Mappings;
+using ProductService.Services;
 
 namespace ProductService.Controllers;
 
@@ -12,13 +15,15 @@ namespace ProductService.Controllers;
 [Route("api/[controller]")]
 public class ProductController : ControllerBase
 {
+    private readonly ICacheService _cache;
     private readonly IProductRepository _repo;
     private readonly IValidator<CreateProductRequestDto> _validator;
 
-    public ProductController(IProductRepository repo, IValidator<CreateProductRequestDto> validator)
+    public ProductController(IProductRepository repo, IValidator<CreateProductRequestDto> validator, ICacheService cache)
     {
         _repo = repo;
         _validator = validator;
+        _cache = cache;
     }
 
     [HttpGet]
@@ -35,12 +40,24 @@ public class ProductController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<Product>> GetProduct(Guid id)
     {
+        string cacheKey = $"product_{id}";
+
+        // 1. Check Redis
+        var cachedProduct = await _cache.GetDataAsync<Product>(cacheKey);
+        if (cachedProduct != null)
+        {
+            return Ok(cachedProduct); 
+        }
+
+
         var product = await _repo.FindAsync(id);
 
         if (product == null)
         {
             return NotFound(new { Message = $"Product with ID {id} not found" });
         }
+        
+        await _cache.SetDataAsync(cacheKey, product, 10);
 
         return Ok(product.ToDto());
     }
