@@ -1,18 +1,22 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ProductService.Models;
 
 namespace ProductService.Data;
 
-public class ProductDbContext : DbContext
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     // Pass the configuration (connection string) down to the base class
-    public ProductDbContext(DbContextOptions<ProductDbContext> options) : base(options) { }
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
     // This represents the "Products" table in your DB
     public DbSet<Product> Products => Set<Product>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Product>().HasData(
                 new Product
                 (
@@ -31,8 +35,4 @@ public class ProductDbContext : DbContext
         );
     }
 
-    internal async Task<Product> FindAsync(Guid id)
-    {
-        throw new NotImplementedException();
-    }
 }

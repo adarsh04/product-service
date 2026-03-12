@@ -6,28 +6,28 @@ using ProductService.Models;
 
 public class ProductRepository: IProductRepository
 {
-    private readonly ProductDbContext _productDbContext;
-    public ProductRepository(ProductDbContext productDbContext)
+    private readonly ApplicationDbContext _applicationDbContext;
+    public ProductRepository(ApplicationDbContext applicationDbContext)
     {
-        this._productDbContext = productDbContext;
+        this._applicationDbContext = applicationDbContext;
     }
     public void AddProduct(Product product)
     {
-        _productDbContext.Products.Add(product);
+        _applicationDbContext.Products.Add(product);
     }
 
     public async Task<bool> SaveChangesAsync()
     {
-        return await _productDbContext.SaveChangesAsync() > 0;
+        return await _applicationDbContext.SaveChangesAsync() > 0;
     }
 
     public async Task<Product?> FindAsync(Guid id)
     {
-        return await _productDbContext.Products.FindAsync(id);
+        return await _applicationDbContext.Products.FindAsync(id);
     }
 
     public async Task<IReadOnlyList<Product>> GetProductsAsync()
     {
-         return await _productDbContext.Products.ToListAsync();
+         return await _applicationDbContext.Products.ToListAsync();
     }
 }
