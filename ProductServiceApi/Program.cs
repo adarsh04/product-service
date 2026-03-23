@@ -1,5 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
+using System.Text;
+using ProductService.Configuration;
 using ProductService.Data;
 using ProductService.Interfaces;
 using ProductService.Middleware;
@@ -18,37 +23,55 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddValidatorsFromAssemblyContaining<CreateProductRequestValidator>();
 
-// var jwtSettings = builder.Configuration.GetSection("Jwt");
+var jwtSettings = new JwtSettings();
+builder.Configuration.GetSection("Jwt").Bind(jwtSettings);
 
-// builder.Services.AddAuthentication(options =>
-// {
-//     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-//     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-// })
-// .AddJwtBearer(options =>
-// {
-//     options.TokenValidationParameters = new TokenValidationParameters
-//     {
-//         ValidateIssuer = true,
-//         ValidateAudience = true,
-//         ValidateLifetime = true,
-//         ValidateIssuerSigningKey = true,
-//         ValidIssuer = jwtSettings["Issuer"],
-//         ValidAudience = jwtSettings["Audience"],
-//         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
-//     };
-// });
+// Register for Dependency Injection
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
-// builder.Services.AddAuthorization();
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
+        ClockSkew = TimeSpan.Zero
+    };
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            // This will print the EXACT reason to your terminal
+            Console.WriteLine($"Auth Failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("Token Validated Successfully!");
+            return Task.CompletedTask;
+        }
+    };
+});
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
 
 builder.Services.AddControllers();
 
@@ -78,6 +101,8 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+Console.WriteLine("Pipeline is running...");
+app.UseAuthentication();
 
 app.UseAuthorization();
 

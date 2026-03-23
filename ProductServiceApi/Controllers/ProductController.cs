@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
@@ -11,6 +12,7 @@ using ProductService.Services;
 
 namespace ProductService.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ProductController : ControllerBase
